@@ -1,5 +1,4 @@
 module.exports = async function handler(req, res) {
-  // הגדרת כותרות CORS כדי שהדפדפן יאשר את קבלת המידע
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -18,7 +17,12 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Missing query' });
     }
 
-    const apiKey = "AIzaSyD" + "Wl-u" + "J66I" + "Zq3G" + "w1w4" + "jMvC" + "ZlY" + "j8M" + "Gf6" + "Sg8";
+    // שליפת המפתח בצורה מאובטחת מהשרת של Vercel
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'Missing API Key configuration on Vercel' });
+    }
+
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     const prompt = `You are an expert travel assistant for the app "Anti-Tourist". The user will give you a famous tourist trap/destination. You must find a less crowded, beautiful, hidden gem alternative nearby or in the same city.
@@ -48,7 +52,6 @@ module.exports = async function handler(req, res) {
     const data = await response.json();
     let cleanText = data.candidates[0].content.parts[0].text.trim();
     
-    // ניקוי של תגיות קוד (Markdown) למקרה שה-AI בכל זאת הוסיף אותן בטעות
     if (cleanText.startsWith("```json")) {
         cleanText = cleanText.substring(7, cleanText.length - 3).trim();
     } else if (cleanText.startsWith("```")) {

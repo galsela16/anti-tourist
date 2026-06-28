@@ -1,0 +1,17 @@
+{
+  "name": "Anti-Tourist",
+  "short_name": "AntiTourist",
+  "description": "גלה את הסודות המקומיים ותברח מההמונים בזמן אמת",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/201/201623.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

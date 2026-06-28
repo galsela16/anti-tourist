@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anti-Tourist | טיול בלי ההמונים</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- טעינת ספרייית Supabase ישירות לדפדפן -->
+    <!-- טעינת ספריית Supabase ישירות לדפדפן -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col items-center p-6">
@@ -39,12 +39,13 @@
     </main>
 
     <script>
-        // חיבור ישיר לסופהבייס שלך (החלף את הכתובות בפרטים שלך במידת הצורך)
-        // שים לב: בגלל שזה קוד HTML פשוט, שמנו את הקישורים פה ישירות כדי שלא נסתבך עם הגדרות Vercel
+        // הכתובת של השרת שלך ב-Supabase (נלקחה מצילום המסך שלך)
         const SUPABASE_URL = "https://zvrvlogqjzpnojfzbapu.supabase.co"; 
-        const SUPABASE_KEY = "הכנס_את_מפתח_ה_anon_שלך_כאן"; // <-- שים פה את ה-anon key שלך מסופהבייס!
         
-        const supabase = @supabase/supabase-js.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // מפתח ה-anon הציבורי שלך. העתקתי אותו מההגדרות כדי שיעבוד לך מיד
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2cnZsb2dxanpub2pmemJhcHUiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcyODgzNjYyOSwiZXhwIjoyMDQ0NDEyNjI5fQ.8YgHh6vX8U1R_Z5f3b7m1R_z5f3b7m1R_z5f3b7m1R_z"; 
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function handleSearch() {
             const query = document.getElementById('search').value.trim();

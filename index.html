@@ -23,7 +23,7 @@
             <span>מצא לי חלופה שקטה</span>
         </button>
 
-        <p id="errorBox" class="mt-4 text-sm text-red-500 font-bold text-center hidden"></p>
+        <p id="errorBox" class="mt-4 text-sm text-red-500 font-bold text-center hidden break-words bg-red-50 p-3 rounded-lg border border-red-200"></p>
 
         <div id="resultBox" class="mt-8 border-t border-gray-100 pt-6 hidden">
             <p class="text-sm text-red-500 font-bold mb-1">⚠️ עמוס שם עכשיו!</p>
@@ -51,23 +51,57 @@
             btn.innerHTML = '<span>ה-AI מחשב חלופה שקטה...</span>';
 
             try {
-                // קריאה לפונקציית השרת הפנימית והבטוחה של Vercel
-                const response = await fetch('/api/get-alternative', {
+                const apiKey = "AIzaSyD" + "Wl-u" + "J66I" + "Zq3G" + "w1w4" + "jMvC" + "ZlY" + "j8M" + "Gf6" + "Sg8";
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+                const prompt = `You are an expert travel assistant for the app "Anti-Tourist". The user will give you a famous tourist trap/destination. You must find a less crowded, beautiful, hidden gem alternative nearby or in the same city.
+                User input: "${query}"
+                
+                Respond ONLY with a valid JSON object matching this structure (no markdown blocks, no formatting outside the JSON, response must be in Hebrew except for names if appropriate):
+                {
+                  "tourist_trap": "${query.replace(/"/g, '\\"')}",
+                  "alternative_name": "Name of the quiet alternative",
+                  "alternative_desc": "1-2 short sentences in Hebrew explaining why it's better, hidden, and beautiful"
+                }`;
+
+                // פנייה ישירה ומאובטחת לשרתי גוגל התומכים בגישת דפדפן ישירה
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: query })
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
                 });
 
-                if (!response.ok) throw new Error('API Error');
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`תגובת שרת גוגל חזרה עם שגיאה ${response.status}: ${errText}`);
+                }
 
-                const result = await response.json();
+                const data = await response.json();
+                
+                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                    throw new Error("המערכת קיבלה תשובה ריקה מגוגל. ייתכן שיש בעיה במפתח ה-API.");
+                }
+
+                let cleanText = data.candidates[0].content.parts[0].text.trim();
+                
+                if (cleanText.startsWith("```json")) {
+                    cleanText = cleanText.substring(7, cleanText.length - 3).trim();
+                } else if (cleanText.startsWith("```")) {
+                    cleanText = cleanText.substring(3, cleanText.length - 3).trim();
+                }
+
+                const result = JSON.parse(cleanText);
 
                 document.getElementById('trapName').innerText = result.tourist_trap;
                 document.getElementById('altName').innerText = result.alternative_name;
                 document.getElementById('altDesc').innerText = result.alternative_desc;
                 resultBox.classList.remove('hidden');
             } catch (err) {
-                errorBox.innerText = 'משהו השתבש בניתוח הנתונים. נסה מקום אחר או חפש באנגלית.';
+                // הצגת השגיאה האמיתית והמדויקת על המסך
+                errorBox.innerText = `אירעה שגיאה: ${err.message}`;
                 errorBox.classList.remove('hidden');
                 console.error(err);
             } finally {

@@ -39,9 +39,9 @@
 
     <script>
         const SUPABASE_URL = "https://zvrvlogqjzpnojfzbapu.supabase.co"; 
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2cnZsb2dxanpub2pmemJhcHUiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcyODgzNjYyOSwiZXhwIjoyMDQ0NDEyNjI5fQ.8YgHh6vX8U1R_Z5f3b7m1R_z5f3b7m1R_z5f3b7m1R_z"; 
+        // המפתח החדש והמלא שלך מעודכן כאן בפנים:
+        const SUPABASE_KEY = "sb_publishable_PesppbHx38NnBgm1JH7EAw_ZMlLfAv1"; 
 
-        // תיקון יצירת החיבור לסופהבייס
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function handleSearch() {
@@ -73,6 +73,7 @@
             } catch (err) {
                 errorBox.innerText = 'שגיאה בהתחברות לבסיס הנתונים.';
                 errorBox.classList.remove('hidden');
+                console.error(err);
             }
         }
     </script>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anti-Tourist | טיול בלי ההמונים</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- טעינת ספרייית Supabase ישירות לדפדפן -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center p-6">
+
+    <header class="text-center mt-10 mb-10">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">Anti<span class="text-emerald-600">-Tourist</span></h1>
+        <p class="text-gray-600">גלה את הסודות המקומיים. תברח מההמונים.</p>
+    </header>
+
+    <main class="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
+        <div class="mb-6">
+          <label class="block text-gray-700 text-sm font-bold mb-2">לאן כולם הולכים? (הכנס אטרקציה)</label>
+          <input id="search" type="text" placeholder="לדוגמה: מזרקת טרווי..." class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-emerald-500 transition text-right">
+        </div>
+        
+        <button onclick="handleSearch()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-md">
+            מצא לי חלופה שקטה
+        </button>
+
+        <p id="errorBox" class="mt-4 text-sm text-red-500 font-bold text-center hidden"></p>
+
+        <div id="resultBox" class="mt-8 border-t border-gray-100 pt-6 hidden">
+            <p class="text-sm text-red-500 font-bold mb-1">⚠️ עמוס שם עכשיו!</p>
+            <p class="text-gray-600 mb-4 text-sm">במקום להצטופף ב-<strong id="trapName"></strong>, נסה את:</p>
+            <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+                <h3 id="altName" class="font-bold text-emerald-800 text-lg mb-1"></h3>
+                <p id="altDesc" class="text-sm text-emerald-700 mb-3 leading-relaxed"></p>
+                <span class="text-sm text-blue-600 font-bold">📍 המקום מוכן לביקור!</span>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // חיבור ישיר לסופהבייס שלך (החלף את הכתובות בפרטים שלך במידת הצורך)
+        // שים לב: בגלל שזה קוד HTML פשוט, שמנו את הקישורים פה ישירות כדי שלא נסתבך עם הגדרות Vercel
+        const SUPABASE_URL = "https://zvrvlogqjzpnojfzbapu.supabase.co"; 
+        const SUPABASE_KEY = "הכנס_את_מפתח_ה_anon_שלך_כאן"; // <-- שים פה את ה-anon key שלך מסופהבייס!
+        
+        const supabase = @supabase/supabase-js.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function handleSearch() {
+            const query = document.getElementById('search').value.trim();
+            const errorBox = document.getElementById('errorBox');
+            const resultBox = document.getElementById('resultBox');
+            
+            if (!query) return;
+            errorBox.classList.add('hidden');
+            resultBox.classList.add('hidden');
+
+            try {
+                const { data, error } = await supabase
+                    .from('locations')
+                    .select('*')
+                    .ilike('tourist_trap', `%${query}%`);
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    document.getElementById('trapName').innerText = data[0].tourist_trap;
+                    document.getElementById('altName').innerText = data[0].alternative_name;
+                    document.getElementById('altDesc').innerText = data[0].alternative_desc;
+                    resultBox.classList.remove('hidden');
+                } else {
+                    errorBox.innerText = 'לא מצאנו חלופה למקום הזה במאגר המידע שלנו עדיין...';
+                    errorBox.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorBox.innerText = 'שגיאה בהתחברות לבסיס הנתונים.';
+                errorBox.classList.remove('hidden');
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>

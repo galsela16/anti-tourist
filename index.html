@@ -25,13 +25,15 @@
 
         <p id="errorBox" class="mt-4 text-sm text-red-500 font-bold text-center hidden break-words bg-red-50 p-3 rounded-lg border border-red-200"></p>
 
+        <!-- קופסת התוצאות שתשתנה אוטומטית (אדום לעמוס, ירוק לרגוע) -->
         <div id="resultBox" class="mt-8 border-t border-gray-100 pt-6 hidden">
-            <p class="text-sm text-red-500 font-bold mb-1">⚠️ עמוס שם עכשיו!</p>
-            <p class="text-gray-600 mb-4 text-sm">במקום להצטופף ב-<strong id="trapName"></strong>, מערכת ה-AI ממליצה על:</p>
-            <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
-                <h3 id="altName" class="font-bold text-emerald-800 text-lg mb-1"></h3>
-                <p id="altDesc" class="text-sm text-emerald-700 mb-3 leading-relaxed"></p>
-                <span class="text-sm text-blue-600 font-bold">📍 המקום מוכן לביקור חלופי!</span>
+            <p id="statusTitle" class="text-lg font-bold mb-1"></p>
+            <p class="text-gray-600 mb-4 text-sm"><span id="statusDesc"></span> <strong id="trapName"></strong>:</p>
+            
+            <div id="altCard" class="rounded-xl p-4 border">
+                <h3 id="altName" class="font-bold text-lg mb-1"></h3>
+                <p id="altDesc" class="text-sm mb-3 leading-relaxed"></p>
+                <span id="altTag" class="text-sm font-bold"></span>
             </div>
         </div>
     </main>
@@ -48,32 +50,47 @@
             errorBox.classList.add('hidden');
             resultBox.classList.add('hidden');
             btn.disabled = true;
-            btn.innerHTML = '<span>ה-AI מחשב חלופה שקטה...</span>';
+            btn.innerHTML = '<span>ה-AI מנתח את רמת העומס...</span>';
 
             try {
-                // קריאה ישירה לפונקציית השרת המאובטחת שלנו ב-Vercel
                 const response = await fetch('/api/get-alternative', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ query: query })
                 });
 
-                if (!response.ok) {
-                    throw new Error('אירעה שגיאה בקבלת הנתונים מהשרת.');
-                }
+                if (!response.ok) throw new Error('אירעה שגיאה בקבלת הנתונים מהשרת.');
 
                 const result = await response.json();
+                if (result.error) throw new Error(result.error);
 
-                if (result.error) {
-                    throw new Error(result.error);
-                }
-
+                // עדכון הטקסטים שחוזרים מהשרת
+                document.getElementById('statusTitle').innerText = result.status_title;
+                document.getElementById('statusDesc').innerText = result.status_desc;
                 document.getElementById('trapName').innerText = result.tourist_trap;
                 document.getElementById('altName').innerText = result.alternative_name;
                 document.getElementById('altDesc').innerText = result.alternative_desc;
+
+                const statusTitle = document.getElementById('statusTitle');
+                const altCard = document.getElementById('altCard');
+                const altTag = document.getElementById('altTag');
+
+                // הגיון העיצוב: אם עמוס הכל נהיה אדום מזהיר, אם רגוע הכל ירוק מפרגן!
+                if (result.is_crowded) {
+                    statusTitle.className = "text-lg font-bold mb-1 text-red-500";
+                    altCard.className = "bg-red-50 border-red-200 text-red-900";
+                    altTag.className = "text-sm text-red-600 font-bold";
+                    altTag.innerText = "📍 מומלץ לשנות מסלול ליעד השקט הזה!";
+                } else {
+                    statusTitle.className = "text-lg font-bold mb-1 text-emerald-600";
+                    altCard.className = "bg-emerald-50 border-emerald-200 text-emerald-900";
+                    altTag.className = "text-sm text-emerald-600 font-bold";
+                    altTag.innerText = "📍 פנינה מקומית מומלצת באזור!";
+                }
+
                 resultBox.classList.remove('hidden');
             } catch (err) {
-                errorBox.innerText = 'משהו השתבש בניתוח הנתונים. נסה מקום אחר או חפש באנגלית.';
+                errorBox.innerText = 'משהו השתבש בניתוח הנתונים. נסה מקום אחר.';
                 errorBox.classList.remove('hidden');
                 console.error(err);
             } finally {

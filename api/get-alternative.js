@@ -17,7 +17,6 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Missing query' });
     }
 
-    // שליפת המפתח בצורה מאובטחת מהשרת של Vercel
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ error: 'Missing API Key configuration on Vercel' });
@@ -25,14 +24,23 @@ module.exports = async function handler(req, res) {
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-    const prompt = `You are an expert travel assistant for the app "Anti-Tourist". The user will give you a famous tourist trap/destination. You must find a less crowded, beautiful, hidden gem alternative nearby or in the same city.
+    // הנחיות חדשות וחכמות ל-AI לבדיקת עומס אמיתית
+    const prompt = `You are an expert travel assistant for the app "Anti-Tourist". The user will provide a destination or place name.
+    Your task is to:
+    1. Determine honestly if this place is a famous, heavily crowded tourist trap or highly congested destination.
+    2. If it IS crowded (like Eiffel Tower, Trevi Fountain, Western Wall on holidays), set "is_crowded" to true, and find a less crowded, beautiful hidden gem alternative nearby.
+    3. If it IS NOT crowded (like a quiet town, Dimona, a remote nature reserve, or a peaceful neighborhood), set "is_crowded" to false. Acknowledge it's a great quiet choice, and suggest an interesting lesser-known spot nearby to enhance their visit.
+    
     User input: "${query}"
     
-    Respond ONLY with a valid JSON object matching this structure (no markdown blocks, no formatting outside the JSON, response must be in Hebrew except for names if appropriate):
+    Respond ONLY with a valid JSON object matching this structure (no markdown blocks, response must be in Hebrew except for names if appropriate):
     {
+      "is_crowded": true or false,
+      "status_title": "Short text like '⚠️ מקום המוני ועמוס!' or '✅ אחלה בחירה! מקום רגוע'",
+      "status_desc": "A short description in Hebrew (e.g., 'במקום להצטופף ב...' or 'המקום הזה בדרך כלל שקט ולא נחשב למלכודת תיירים. אם אתם שם, כדאי לבקר גם ב-')",
       "tourist_trap": "${query.replace(/"/g, '\\"')}",
-      "alternative_name": "Name of the quiet alternative",
-      "alternative_desc": "1-2 short sentences in Hebrew explaining why it's better, hidden, and beautiful"
+      "alternative_name": "Name of the quiet alternative or nearby recommended spot",
+      "alternative_desc": "1-2 short sentences in Hebrew explaining the recommendation"
     }`;
 
     const response = await fetch(url, {

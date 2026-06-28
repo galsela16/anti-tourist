@@ -14,15 +14,6 @@
     </header>
 
     <main class="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
-        <!-- תיבת הגדרת מפתח ה-API - מוגנת מפני הבוטים של GitHub -->
-        <div class="mb-4 bg-gray-100 p-3 rounded-xl border border-gray-200">
-            <label class="block text-gray-700 text-xs font-bold mb-1">מפתח Gemini API (מ-Google AI Studio):</label>
-            <input id="apiKey" type="password" placeholder="הדבק כאן את ה-AIzaSy שלך..." class="w-full px-3 py-2 text-xs rounded-lg border border-gray-300 focus:outline-none focus:border-emerald-500 text-left">
-            <p class="text-[10px] text-gray-500 mt-1">* המפתח נשמר בדפדפן שלך בלבד ולא ייחשף ב-GitHub.</p>
-        </div>
-
-        <hr class="mb-4 border-gray-200">
-
         <div class="mb-6">
           <label class="block text-gray-700 text-sm font-bold mb-2">לאן כולם הולכים? (הכנס כל מקום בעולם)</label>
           <input id="search" type="text" placeholder="לדוגמה: מזרקת טרווי, אייפל, הכותל..." class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-emerald-500 transition text-right">
@@ -46,31 +37,13 @@
     </main>
 
     <script>
-        // טעינה אוטומטית של המפתח מהזיכרון המקומי אם הוא קיים
-        window.onload = function() {
-            const savedKey = localStorage.getItem('anti_tourist_gemini_key');
-            if (savedKey) {
-                document.getElementById('apiKey').value = savedKey;
-            }
-        };
-
         async function handleSearch() {
             const query = document.getElementById('search').value.trim();
-            const apiKey = document.getElementById('apiKey').value.trim();
             const errorBox = document.getElementById('errorBox');
             const resultBox = document.getElementById('resultBox');
             const btn = document.getElementById('btn');
             
             if (!query) return;
-
-            if (!apiKey) {
-                errorBox.innerText = 'אנא הדבק את מפתח ה-API שלך בתיבה האפורה למעלה.';
-                errorBox.classList.remove('hidden');
-                return;
-            }
-            
-            // שמירת המפתח בזיכרון הדפדפן לפעמים הבאות
-            localStorage.setItem('anti_tourist_gemini_key', apiKey);
 
             errorBox.classList.add('hidden');
             resultBox.classList.add('hidden');
@@ -78,49 +51,29 @@
             btn.innerHTML = '<span>ה-AI מחשב חלופה שקטה...</span>';
 
             try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-
-                const prompt = `You are an expert travel assistant for the app "Anti-Tourist". The user will give you a famous tourist trap/destination. You must find a less crowded, beautiful, hidden gem alternative nearby or in the same city.
-                User input: "${query}"
-                
-                Respond ONLY with a valid JSON object matching this structure (no markdown blocks, no formatting outside the JSON, response must be in Hebrew except for names if appropriate):
-                {
-                  "tourist_trap": "${query.replace(/"/g, '\\"')}",
-                  "alternative_name": "Name of the quiet alternative",
-                  "alternative_desc": "1-2 short sentences in Hebrew explaining why it's better, hidden, and beautiful"
-                }`;
-
-                const response = await fetch(url, {
+                // קריאה ישירה לפונקציית השרת המאובטחת שלנו ב-Vercel
+                const response = await fetch('/api/get-alternative', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
+                    body: JSON.stringify({ query: query })
                 });
 
                 if (!response.ok) {
-                    const errText = await response.text();
-                    throw new Error(`שגיאת שרת גוגל (${response.status}). ודא שהעתקת את המפתח שלך נכון מ-AI Studio.`);
+                    throw new Error('אירעה שגיאה בקבלת הנתונים מהשרת.');
                 }
 
-                const data = await response.json();
-                let cleanText = data.candidates[0].content.parts[0].text.trim();
-                
-                if (cleanText.startsWith("```json")) {
-                    cleanText = cleanText.substring(7, cleanText.length - 3).trim();
-                } else if (cleanText.startsWith("```")) {
-                    cleanText = cleanText.substring(3, cleanText.length - 3).trim();
-                }
+                const result = await response.json();
 
-                const result = JSON.parse(cleanText);
+                if (result.error) {
+                    throw new Error(result.error);
+                }
 
                 document.getElementById('trapName').innerText = result.tourist_trap;
                 document.getElementById('altName').innerText = result.alternative_name;
                 document.getElementById('altDesc').innerText = result.alternative_desc;
                 resultBox.classList.remove('hidden');
             } catch (err) {
-                errorBox.innerText = `אירעה שגיאה: ${err.message}`;
+                errorBox.innerText = 'משהו השתבש בניתוח הנתונים. נסה מקום אחר או חפש באנגלית.';
                 errorBox.classList.remove('hidden');
                 console.error(err);
             } finally {
